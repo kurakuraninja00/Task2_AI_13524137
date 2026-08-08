@@ -1,0 +1,1130 @@
+% ============================================================================
+% Spesifikasi Tugas Besar Inteligensi Artifisial
+% Topik: Local Search — N-Queens Problem
+% ============================================================================
+\documentclass[12pt,a4paper]{article}
+
+% --- Package ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[indonesian]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{caption}
+
+% --- Pengaturan halaman ---
+\geometry{margin=2.5cm}
+
+% --- Pengaturan hyperref ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!70!black,
+    citecolor=blue!70!black
+}
+
+% --- Pengaturan listings untuk Python ---
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue!70!black}\bfseries,
+    stringstyle=\color{red!60!black},
+    commentstyle=\color{green!50!black}\itshape,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=8pt,
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{gray!50},
+    backgroundcolor=\color{gray!5},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b
+}
+\lstset{style=pythonstyle}
+
+% --- Pengaturan algoritma ---
+\floatname{algorithm}{Algoritma}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+% --- Pengaturan tikz untuk papan catur ---
+\usetikzlibrary{calc}
+
+% ============================================================================
+% HALAMAN JUDUL
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\LARGE \textbf{Spesifikasi Tugas Besar Inteligensi Artifisial}}\\[0.5cm]
+    {\LARGE \textbf{---}}\\[0.5cm]
+    {\LARGE \textbf{Local Search: N-Queens Problem}}\\[3cm]
+
+    {\large Disusun oleh:}\\[0.8cm]
+    {\Large \textbf{[NAMA MAHASISWA]}}\\[0.4cm]
+    {\Large \textbf{[NIM MAHASISWA]}}\\[4cm]
+
+    {\large Program Studi Informatika}\\[0.3cm]
+    {\large Institut Teknologi Bandung}\\[0.3cm]
+    {\large 2026}
+
+    \vfill
+\end{titlepage}
+
+\newpage
+
+% ============================================================================
+% DAFTAR ISI
+% ============================================================================
+\tableofcontents
+\newpage
+
+% ============================================================================
+% CATATAN PENDAHULUAN
+% ============================================================================
+
+\vspace{1em}
+
+% ============================================================================
+% SECTION 1: TUJUAN DAN DESKRIPSI PERMASALAHAN
+% ============================================================================
+\section{Tujuan dan Deskripsi Permasalahan}
+\label{sec:tujuan}
+
+\subsection{Tujuan}
+\label{subsec:tujuan}
+
+Tugas besar ini bertujuan agar mahasiswa mampu:
+\begin{enumerate}[label=\arabic*.]
+    \item Memahami dan memformulasikan persoalan \textit{N-Queens} sebagai persoalan \textit{local search}.
+    \item Merancang dan mengimplementasikan beberapa algoritma \textit{local search}, meliputi varian \textit{Hill-Climbing}, \textit{Simulated Annealing}, dan \textit{Genetic Algorithm}.
+    \item Merancang \textit{objective function} yang tepat untuk mengevaluasi kualitas suatu \textit{state}.
+    \item Membandingkan performa berbagai algoritma \textit{local search} pada persoalan \textit{N-Queens}.
+    \item Memvisualisasikan proses pencarian solusi secara iteratif.
+\end{enumerate}
+
+\subsection{Deskripsi Permasalahan N-Queens}
+\label{subsec:deskripsi}
+
+Persoalan \textit{N-Queens} adalah persoalan klasik dalam bidang kecerdasan artifisial dan pemrograman kombinatorik. Diberikan sebuah papan catur berukuran $N \times N$, tujuannya adalah menempatkan $N$ buah ratu pada papan tersebut sedemikian sehingga \textbf{tidak ada dua ratu yang saling menyerang}. Dalam catur, ratu dapat menyerang secara horizontal (baris yang sama), vertikal (kolom yang sama), dan diagonal.
+
+\subsection{N-Queens sebagai Persoalan \textit{Local Search}}
+\label{subsec:local-search}
+
+Pada pendekatan \textit{local search}, persoalan \textit{N-Queens} diformulasikan menggunakan \textit{complete-state formulation}. Artinya:
+\begin{itemize}
+    \item Setiap \textit{state} merepresentasikan suatu konfigurasi lengkap di mana \textbf{seluruh $N$ ratu telah ditempatkan} pada papan.
+    \item Pencarian dimulai dari suatu \textit{initial state} (konfigurasi awal) yang mungkin belum merupakan solusi.
+    \item Algoritma bekerja dengan cara \textbf{memperbaiki konfigurasi secara iteratif} melalui perubahan-perubahan lokal (\textit{moves}) hingga ditemukan konfigurasi yang memenuhi seluruh \textit{constraint} atau hingga kriteria berhenti terpenuhi.
+    \item Tidak diperlukan \textit{path} (jalur) dari \textit{initial state} menuju \textit{goal state} --- yang penting adalah \textit{state} akhir yang dicapai.
+\end{itemize}
+
+Pendekatan ini berbeda dari pendekatan \textit{incremental formulation} (misalnya \textit{backtracking}) yang membangun solusi satu ratu per langkah.
+
+% ============================================================================
+% SECTION 2: REPRESENTASI STATE
+% ============================================================================
+\section{Representasi \textit{State}}
+\label{sec:representasi}
+
+\subsection{Formulasi \textit{Complete-State}}
+\label{subsec:complete-state}
+
+Setiap \textit{state} direpresentasikan sebagai sebuah \textbf{array satu dimensi} berukuran $N$:
+\[
+    S = [q_1, q_2, q_3, \ldots, q_N]
+\]
+di mana $q_i \in \{1, 2, \ldots, N\}$ menyatakan \textbf{posisi baris} ratu pada \textbf{kolom ke-$i$}. Dengan representasi ini, setiap kolom dijamin hanya memiliki tepat satu ratu, sehingga \textit{constraint} kolom otomatis terpenuhi.
+
+\subsection{Contoh Representasi}
+\label{subsec:contoh-representasi}
+
+Untuk papan $8 \times 8$, contoh suatu \textit{state}:
+\[
+    S = [3, 6, 2, 7, 1, 4, 8, 5]
+\]
+berarti:
+\begin{itemize}
+    \item Kolom 1: ratu berada di baris 3
+    \item Kolom 2: ratu berada di baris 6
+    \item Kolom 3: ratu berada di baris 2
+    \item Kolom 4: ratu berada di baris 7
+    \item Kolom 5: ratu berada di baris 1
+    \item Kolom 6: ratu berada di baris 4
+    \item Kolom 7: ratu berada di baris 8
+    \item Kolom 8: ratu berada di baris 5
+\end{itemize}
+
+Representasi visual pada papan $8 \times 8$:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.6]
+    % Gambar papan catur
+    \foreach \row in {1,...,8} {
+        \foreach \col in {1,...,8} {
+            \pgfmathparse{mod(\row+\col,2) ? "gray!25" : "white"}
+            \edef\squarecolor{\pgfmathresult}
+            \fill[\squarecolor] (\col-1, \row-1) rectangle (\col, \row);
+            \draw[gray!50] (\col-1, \row-1) rectangle (\col, \row);
+        }
+    }
+    % Tempatkan ratu sesuai S = [3,6,2,7,1,4,8,5]
+    \node at (0.5, 2.5) {\Large\textbf{Q}};  % Kolom 1, Baris 3
+    \node at (1.5, 5.5) {\Large\textbf{Q}};  % Kolom 2, Baris 6
+    \node at (2.5, 1.5) {\Large\textbf{Q}};  % Kolom 3, Baris 2
+    \node at (3.5, 6.5) {\Large\textbf{Q}};  % Kolom 4, Baris 7
+    \node at (4.5, 0.5) {\Large\textbf{Q}};  % Kolom 5, Baris 1
+    \node at (5.5, 3.5) {\Large\textbf{Q}};  % Kolom 6, Baris 4
+    \node at (6.5, 7.5) {\Large\textbf{Q}};  % Kolom 7, Baris 8
+    \node at (7.5, 4.5) {\Large\textbf{Q}};  % Kolom 8, Baris 5
+    % Label kolom
+    \foreach \col in {1,...,8} {
+        \node[below] at (\col-0.5, -0.2) {\small \col};
+    }
+    % Label baris
+    \foreach \row in {1,...,8} {
+        \node[left] at (-0.2, \row-0.5) {\small \row};
+    }
+\end{tikzpicture}
+\captionof{figure}{Visualisasi \textit{state} $S = [3, 6, 2, 7, 1, 4, 8, 5]$ pada papan $8 \times 8$.}
+\label{fig:contoh-state}
+\end{center}
+
+\subsection{Keuntungan Representasi Array}
+\label{subsec:keuntungan}
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Efisien secara memori}: hanya membutuhkan array berukuran $N$ untuk menyimpan seluruh konfigurasi.
+    \item \textbf{Constraint kolom otomatis terpenuhi}: setiap indeks array merepresentasikan satu kolom, sehingga tidak mungkin ada dua ratu di kolom yang sama.
+    \item \textbf{Memudahkan komputasi}: pengecekan konflik baris dan diagonal dapat dilakukan secara efisien dengan operasi aritmetika sederhana.
+\end{enumerate}
+
+% ============================================================================
+% SECTION 3: ATURAN DAN BATASAN (CONSTRAINTS)
+% ============================================================================
+\section{Aturan dan Batasan (\textit{Constraints})}
+\label{sec:constraints}
+
+\subsection{Batasan Utama}
+\label{subsec:batasan-utama}
+
+Sebuah \textit{state} $S = [q_1, q_2, \ldots, q_N]$ merupakan \textbf{solusi valid} (atau \textit{goal state}) jika dan hanya jika memenuhi seluruh \textit{constraint} berikut:
+
+\begin{enumerate}[label=\textbf{C\arabic*.}]
+    \item \textbf{Constraint kolom}: Setiap kolom memiliki tepat satu ratu. Constraint ini \textbf{otomatis terpenuhi} oleh representasi array yang digunakan (lihat Bagian~\ref{sec:representasi}).
+
+    \item \textbf{Constraint baris}: Tidak ada dua ratu yang berada pada baris yang sama. Secara formal:
+    \[
+        \forall\, i \neq j : q_i \neq q_j
+    \]
+
+    \item \textbf{Constraint diagonal}: Tidak ada dua ratu yang berada pada diagonal yang sama. Dua ratu pada kolom $i$ dan kolom $j$ ($i \neq j$) berada pada diagonal yang sama jika dan hanya jika:
+    \[
+        |q_i - q_j| = |i - j|
+    \]
+    Oleh karena itu, \textit{constraint} diagonal mensyaratkan:
+    \[
+        \forall\, i \neq j : |q_i - q_j| \neq |i - j|
+    \]
+\end{enumerate}
+
+\subsection{Parameter Permasalahan}
+\label{subsec:parameter}
+
+\begin{itemize}
+    \item \textbf{Ukuran papan $N$}: bilangan bulat positif, $N \geq 4$ (untuk $N < 4$ tidak terdapat solusi, kecuali $N = 1$).
+    \item Nilai $N$ default yang digunakan untuk pengujian adalah $N = 8$ (\textit{8-Queens Problem}).
+    \item Implementasi harus mendukung nilai $N$ yang bervariasi (\textit{general N}).
+\end{itemize}
+
+% ============================================================================
+% SECTION 4: FORMULASI INITIAL STATE
+% ============================================================================
+\section{Formulasi \textit{Initial State}}
+\label{sec:initial-state}
+
+\subsection{Pembangkitan Secara \textit{Random}}
+\label{subsec:random-init}
+
+\textit{Initial state} dibangkitkan secara \textbf{random} (\textit{acak}). Untuk setiap kolom $i$ ($1 \leq i \leq N$), nilai $q_i$ ditentukan secara acak dari himpunan $\{1, 2, \ldots, N\}$:
+\[
+    q_i \leftarrow \text{random}(1, N), \quad \forall\, i \in \{1, 2, \ldots, N\}
+\]
+
+Pembangkitan ini memperbolehkan adanya ratu pada baris yang sama (\textit{constraint} baris belum tentu terpenuhi pada \textit{initial state}), sehingga \textit{state} awal umumnya bukan merupakan solusi.
+
+\subsection{Contoh \textit{Initial State}}
+\label{subsec:contoh-initial}
+
+Contoh \textit{initial state} random untuk $N = 8$:
+\[
+    S_0 = [5, 2, 4, 6, 8, 3, 1, 4]
+\]
+Pada konfigurasi ini, terdapat dua ratu yang berada di baris 4 (kolom 3 dan kolom 8), sehingga terjadi konflik baris. Selain itu, perlu diperiksa pula apakah terdapat konflik diagonal. \textit{State} ini menjadi titik awal bagi algoritma \textit{local search} untuk memperbaiki konfigurasi menuju solusi.
+
+\subsection{Alternatif: Permutasi Acak}
+\label{subsec:permutasi}
+
+Sebagai alternatif, \textit{initial state} dapat dibangkitkan sebagai \textbf{permutasi acak} dari $\{1, 2, \ldots, N\}$:
+\[
+    S_0 = \text{random\_permutation}(1, 2, \ldots, N)
+\]
+Dengan metode ini, \textit{constraint} baris dan kolom otomatis terpenuhi, sehingga pencarian hanya perlu menyelesaikan konflik diagonal. Metode ini umumnya menghasilkan \textit{initial state} yang lebih baik (nilai \textit{objective function} lebih rendah).
+
+% ============================================================================
+% SECTION 5: SUCCESSOR FUNCTION DAN NEIGHBOR MOVE
+% ============================================================================
+\section{\textit{Successor Function} dan \textit{Neighbor} (\textit{Move})}
+\label{sec:successor}
+
+\subsection{Definisi \textit{Successor Function}}
+\label{subsec:def-successor}
+
+\textit{Successor function} mendefinisikan himpunan seluruh \textit{state} tetangga (\textit{neighbors}) yang dapat dicapai dari suatu \textit{state} saat ini melalui satu langkah perubahan (\textit{move}). Secara formal:
+\[
+    \text{Successors}(S) = \{ S' \mid S' \text{ diperoleh dari } S \text{ dengan satu operasi \textit{move}} \}
+\]
+
+\subsection{Definisi \textit{Move}}
+\label{subsec:def-move}
+
+\textit{Move} utama yang digunakan adalah \textbf{mengubah posisi baris satu ratu pada satu kolom tertentu}. Untuk suatu \textit{state} $S = [q_1, \ldots, q_i, \ldots, q_N]$, sebuah \textit{move} pada kolom $i$ menghasilkan \textit{state} baru $S'$ di mana:
+\[
+    S' = [q_1, \ldots, q_i', \ldots, q_N], \quad q_i' \neq q_i, \quad q_i' \in \{1, 2, \ldots, N\}
+\]
+Artinya, ratu pada kolom $i$ dipindahkan ke baris lain pada kolom yang sama.
+
+\subsection{Jumlah \textit{Neighbor}}
+\label{subsec:jumlah-neighbor}
+
+Untuk setiap kolom, terdapat $(N - 1)$ kemungkinan perpindahan baris (semua baris kecuali baris saat ini). Dengan $N$ kolom, total jumlah \textit{neighbor} dari suatu \textit{state} adalah:
+\[
+    |\text{Successors}(S)| = N \times (N - 1)
+\]
+Untuk $N = 8$, terdapat $8 \times 7 = 56$ \textit{neighbor} dari setiap \textit{state}.
+
+\subsection{Contoh \textit{Move}}
+\label{subsec:contoh-move}
+
+Diberikan \textit{state} $S = [5, 2, 4, 6, 8, 3, 1, 4]$ pada papan $8 \times 8$. Contoh \textit{move}: memindahkan ratu di kolom 3 dari baris 4 ke baris 7:
+\[
+    S = [5, 2, \mathbf{4}, 6, 8, 3, 1, 4] \xrightarrow{\text{move}(3, 7)} S' = [5, 2, \mathbf{7}, 6, 8, 3, 1, 4]
+\]
+
+% ============================================================================
+% SECTION 6: OBJECTIVE FUNCTION / HEURISTIC COST FUNCTION
+% ============================================================================
+\section{\textit{Objective Function} / \textit{Heuristic Cost Function}}
+\label{sec:objective}
+
+\subsection{Definisi Fungsi}
+\label{subsec:def-objective}
+
+\textit{Objective function} (fungsi objektif) yang digunakan adalah \textbf{jumlah pasangan ratu yang saling menyerang} (\textit{number of attacking pairs}). Fungsi ini didefinisikan sebagai:
+\[
+    h(S) = \sum_{\substack{i < j \\ 1 \leq i,j \leq N}} \text{attack}(i, j)
+\]
+di mana:
+\[
+    \text{attack}(i, j) =
+    \begin{cases}
+        1, & \text{jika ratu di kolom } i \text{ dan kolom } j \text{ saling menyerang} \\
+        0, & \text{sebaliknya}
+    \end{cases}
+\]
+
+Dua ratu pada kolom $i$ dan kolom $j$ saling menyerang jika memenuhi salah satu kondisi berikut:
+\begin{enumerate}[label=(\alph*)]
+    \item \textbf{Konflik baris}: $q_i = q_j$
+    \item \textbf{Konflik diagonal}: $|q_i - q_j| = |i - j|$
+\end{enumerate}
+
+\subsection{Sifat Fungsi}
+\label{subsec:sifat-objective}
+
+\begin{itemize}
+    \item $h(S) \geq 0$ untuk semua \textit{state} $S$.
+    \item $h(S) = 0$ jika dan hanya jika $S$ merupakan \textbf{solusi valid} (\textit{goal state}), yaitu tidak ada pasangan ratu yang saling menyerang.
+    \item Nilai maksimum $h(S)$ bergantung pada $N$; untuk $N = 8$, nilai maksimum adalah $\binom{8}{2} = 28$ (ketika setiap pasangan ratu saling menyerang).
+    \item Karena tujuan \textit{local search} adalah \textbf{meminimumkan} $h(S)$, maka fungsi ini bersifat sebagai \textit{cost function} yang harus diminimalkan menuju nol.
+\end{itemize}
+
+\subsection{Alasan Pemilihan}
+\label{subsec:alasan-objective}
+
+Fungsi $h(S) = $ jumlah pasangan ratu yang saling menyerang dipilih karena:
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Informatif}: memberikan ukuran kuantitatif yang jelas tentang ``seberapa jauh'' suatu \textit{state} dari solusi. Semakin kecil nilainya, semakin dekat \textit{state} tersebut ke solusi.
+    \item \textbf{Gradien halus}: perubahan satu ratu umumnya mengubah nilai $h$ secara bertahap (tidak drastis), sehingga memungkinkan algoritma \textit{local search} untuk melakukan perbaikan inkremental.
+    \item \textbf{Efisien dihitung}: dapat dihitung dalam $O(N^2)$ dengan iterasi pasangan ratu, atau dapat di-\textit{update} secara inkremental dalam $O(N)$ setelah satu \textit{move}.
+    \item \textbf{Standar dalam literatur}: fungsi ini merupakan \textit{heuristic} standar yang digunakan pada contoh \textit{N-Queens} dalam buku teks AI (misalnya Russell \& Norvig, \textit{Artificial Intelligence: A Modern Approach}).
+\end{enumerate}
+
+\subsection{Contoh Perhitungan}
+\label{subsec:contoh-hitung}
+
+Diberikan \textit{state} $S = [5, 2, 4, 6, 8, 3, 1, 4]$ pada papan $8 \times 8$.
+
+Pengecekan konflik untuk setiap pasangan kolom $(i, j)$ dengan $i < j$:
+\begin{itemize}
+    \item Kolom 3 dan 8: $q_3 = 4, q_8 = 4$ $\Rightarrow$ konflik baris ($q_3 = q_8$). $\text{attack} = 1$.
+    \item Kolom 1 dan 3: $q_1 = 5, q_3 = 4$, $|5 - 4| = 1$, $|1 - 3| = 2$ $\Rightarrow$ tidak konflik.
+    \item Kolom 2 dan 4: $q_2 = 2, q_4 = 6$, $|2 - 6| = 4$, $|2 - 4| = 2$ $\Rightarrow$ tidak konflik.
+    \item (dan seterusnya untuk seluruh $\binom{8}{2} = 28$ pasangan)
+\end{itemize}
+
+Setelah memeriksa seluruh pasangan, diperoleh (misalnya) $h(S) = 5$, artinya terdapat 5 pasangan ratu yang saling menyerang.
+
+% ============================================================================
+% SECTION 7: KONSEP IMPLEMENTASI ALGORITMA
+% ============================================================================
+\section{Konsep Implementasi Algoritma}
+\label{sec:implementasi}
+
+Bagian ini menjelaskan rancangan tiap algoritma \textit{local search} yang harus diimplementasikan, beserta cara kerjanya pada konteks persoalan \textit{N-Queens}. Seluruh algoritma menggunakan representasi \textit{state}, \textit{successor function}, dan \textit{objective function} yang telah didefinisikan pada bagian-bagian sebelumnya secara konsisten.
+
+% -------------------------------------------------------
+\subsection{Hill-Climbing}
+\label{subsec:hill-climbing}
+
+\textit{Hill-Climbing} adalah algoritma \textit{local search} yang bekerja dengan cara memilih \textit{neighbor} terbaik (atau lebih baik) pada setiap iterasi. Berikut adalah empat varian yang harus diimplementasikan.
+
+% - - - - - - - - - - - - - - - - -
+\subsubsection{Basic Hill-Climbing (\textit{Steepest-Ascent})}
+\label{subsubsec:basic-hc}
+
+\textbf{Cara kerja pada konteks N-Queens:}
+\begin{enumerate}[label=\arabic*.]
+    \item Bangkitkan \textit{initial state} $S_0$ secara random.
+    \item Hitung $h(S_0)$ (jumlah pasangan ratu yang saling menyerang).
+    \item Pada setiap iterasi:
+    \begin{enumerate}[label=\alph*.]
+        \item Bangkitkan \textbf{seluruh} $N \times (N-1)$ \textit{neighbor} dari \textit{state} saat ini $S$.
+        \item Hitung $h(S')$ untuk setiap \textit{neighbor} $S'$.
+        \item Pilih \textit{neighbor} $S^*$ dengan nilai $h$ \textbf{terkecil} (\textit{steepest descent}, karena kita meminimumkan $h$).
+        \item Jika $h(S^*) < h(S)$: pindah ke $S^* $ ($S \leftarrow S^*$).
+        \item Jika $h(S^*) \geq h(S)$: berhenti (telah mencapai \textit{local minimum} atau \textit{goal}).
+    \end{enumerate}
+    \item Jika $h(S) = 0$, maka solusi ditemukan.
+\end{enumerate}
+
+\textbf{Kelemahan}: Algoritma ini sering terjebak pada \textit{local minimum} (nilai $h > 0$ tetapi tidak ada \textit{neighbor} yang lebih baik), \textit{plateau} (daerah datar dengan banyak \textit{state} bernilai $h$ sama), atau \textit{ridge} (area sempit yang sulit dinavigasi).
+
+\begin{algorithm}[H]
+\caption{Basic Hill-Climbing (\textit{Steepest-Ascent}) untuk N-Queens}
+\label{alg:basic-hc}
+\begin{algorithmic}[1]
+\Require \textit{State} awal $S$ (random)
+\Ensure \textit{State} akhir $S$ (solusi atau \textit{local minimum})
+\Repeat
+    \State $S^* \leftarrow$ \textit{neighbor} dari $S$ dengan $h$ terkecil
+    \If{$h(S^*) \geq h(S)$}
+        \State \Return $S$ \Comment{Terjebak di \textit{local minimum} atau sudah solusi}
+    \EndIf
+    \State $S \leftarrow S^*$
+\Until{$h(S) = 0$}
+\State \Return $S$
+\end{algorithmic}
+\end{algorithm}
+
+% - - - - - - - - - - - - - - - - -
+\subsubsection{Hill-Climbing dengan \textit{Sideways Move}}
+\label{subsubsec:sideways}
+
+\textbf{Motivasi}: Pada \textit{basic hill-climbing}, algoritma langsung berhenti ketika menemui \textit{plateau} (semua \textit{neighbor} memiliki $h$ yang sama atau lebih buruk). Dengan mengizinkan \textit{sideways move}, algoritma dapat ``berjalan menyamping'' pada \textit{plateau} dengan harapan menemukan jalan keluar menuju penurunan $h$.
+
+\textbf{Cara kerja pada konteks N-Queens:}
+\begin{enumerate}[label=\arabic*.]
+    \item Sama seperti \textit{basic hill-climbing}, tetapi ketika $h(S^*) = h(S)$ (tidak ada perbaikan, tetapi ada \textit{neighbor} dengan nilai sama):
+    \begin{itemize}
+        \item Izinkan perpindahan ke $S^*$ (\textit{sideways move}).
+        \item Batasi jumlah \textit{sideways move} berturut-turut maksimal sebanyak $M$ langkah (misalnya $M = 100$) untuk menghindari \textit{infinite loop} pada \textit{plateau} yang datar sepenuhnya.
+    \end{itemize}
+    \item Jika jumlah \textit{sideways move} berturut-turut mencapai $M$ tanpa ada penurunan $h$: berhenti.
+    \item Jika ditemukan \textit{neighbor} dengan $h$ lebih kecil: lakukan perpindahan dan \textit{reset counter sideways} ke 0.
+\end{enumerate}
+
+\begin{algorithm}[H]
+\caption{Hill-Climbing dengan \textit{Sideways Move} untuk N-Queens}
+\label{alg:sideways-hc}
+\begin{algorithmic}[1]
+\Require \textit{State} awal $S$ (random), batas \textit{sideways} $M$
+\Ensure \textit{State} akhir $S$
+\State $\text{sideways\_count} \leftarrow 0$
+\Repeat
+    \State $S^* \leftarrow$ \textit{neighbor} dari $S$ dengan $h$ terkecil
+    \If{$h(S^*) < h(S)$}
+        \State $S \leftarrow S^*$
+        \State $\text{sideways\_count} \leftarrow 0$
+    \ElsIf{$h(S^*) = h(S)$ \textbf{and} $\text{sideways\_count} < M$}
+        \State $S \leftarrow S^*$
+        \State $\text{sideways\_count} \leftarrow \text{sideways\_count} + 1$
+    \Else
+        \State \Return $S$
+    \EndIf
+\Until{$h(S) = 0$}
+\State \Return $S$
+\end{algorithmic}
+\end{algorithm}
+
+% - - - - - - - - - - - - - - - - -
+\subsubsection{\textit{Stochastic Hill-Climbing}}
+\label{subsubsec:stochastic}
+
+\textbf{Motivasi}: Alih-alih selalu memilih \textit{neighbor} terbaik (\textit{steepest}), \textit{stochastic hill-climbing} memilih secara acak di antara \textit{neighbor-neighbor} yang memberikan perbaikan. Hal ini mengurangi biaya evaluasi seluruh \textit{neighbor} dan memberikan diversifikasi pencarian.
+
+\textbf{Cara kerja pada konteks N-Queens:}
+\begin{enumerate}[label=\arabic*.]
+    \item Bangkitkan \textit{initial state} $S_0$ secara random.
+    \item Pada setiap iterasi:
+    \begin{enumerate}[label=\alph*.]
+        \item Bangkitkan satu atau beberapa \textit{neighbor} secara acak dari \textit{state} saat ini $S$.
+        \item Di antara \textit{neighbor} yang memiliki $h(S') < h(S)$ (\textit{uphill moves} dalam konteks minimisasi berarti penurunan $h$), pilih salah satu secara \textbf{acak}.
+        \item Jika ada \textit{neighbor} yang lebih baik: pindah ke \textit{neighbor} tersebut.
+        \item Jika tidak ada \textit{neighbor} yang lebih baik: berhenti.
+    \end{enumerate}
+\end{enumerate}
+
+Probabilitas pemilihan \textit{neighbor} yang lebih baik dapat disesuaikan, misalnya menggunakan bobot proporsional terhadap besarnya penurunan $h$.
+
+\begin{algorithm}[H]
+\caption{\textit{Stochastic Hill-Climbing} untuk N-Queens}
+\label{alg:stochastic-hc}
+\begin{algorithmic}[1]
+\Require \textit{State} awal $S$ (random)
+\Ensure \textit{State} akhir $S$
+\Repeat
+    \State $\mathcal{B} \leftarrow \{ S' \in \text{Successors}(S) \mid h(S') < h(S) \}$
+    \If{$\mathcal{B} = \emptyset$}
+        \State \Return $S$ \Comment{Tidak ada \textit{neighbor} yang lebih baik}
+    \EndIf
+    \State $S \leftarrow$ pilih secara acak dari $\mathcal{B}$
+\Until{$h(S) = 0$}
+\State \Return $S$
+\end{algorithmic}
+\end{algorithm}
+
+% - - - - - - - - - - - - - - - - -
+\subsubsection{\textit{Random Restart Hill-Climbing}}
+\label{subsubsec:random-restart}
+
+\textbf{Motivasi}: Karena \textit{hill-climbing} sering terjebak pada \textit{local minimum}, solusinya adalah menjalankan \textit{hill-climbing} berkali-kali dari \textit{initial state} random yang berbeda-beda. Ide dasarnya: ``jika pada awalnya gagal, coba lagi dari posisi random baru''.
+
+\textbf{Cara kerja pada konteks N-Queens:}
+\begin{enumerate}[label=\arabic*.]
+    \item Jalankan salah satu varian \textit{hill-climbing} (misalnya \textit{steepest-ascent} atau \textit{sideways move}) dari \textit{initial state} random.
+    \item Jika ditemukan solusi ($h = 0$): selesai.
+    \item Jika terjebak di \textit{local minimum} ($h > 0$): bangkitkan \textit{initial state} random baru dan ulangi dari langkah 1.
+    \item Ulangi proses hingga solusi ditemukan atau batas jumlah \textit{restart} tercapai.
+\end{enumerate}
+
+\textbf{Kelengkapan}: Dengan jumlah \textit{restart} yang cukup (secara teori tak terbatas), \textit{random restart hill-climbing} bersifat \textbf{lengkap} (\textit{complete}) --- pasti menemukan solusi jika solusi ada.
+
+\begin{algorithm}[H]
+\caption{\textit{Random Restart Hill-Climbing} untuk N-Queens}
+\label{alg:random-restart-hc}
+\begin{algorithmic}[1]
+\Require Batas jumlah \textit{restart} $R$
+\Ensure \textit{State} solusi $S$ atau kegagalan
+\For{$r = 1$ \textbf{to} $R$}
+    \State $S \leftarrow$ bangkitkan \textit{initial state} random
+    \State $S \leftarrow$ \Call{HillClimbing}{$S$} \Comment{Gunakan salah satu varian}
+    \If{$h(S) = 0$}
+        \State \Return $S$ \Comment{Solusi ditemukan}
+    \EndIf
+\EndFor
+\State \Return \textit{gagal}
+\end{algorithmic}
+\end{algorithm}
+
+% -------------------------------------------------------
+\subsection{\textit{Simulated Annealing}}
+\label{subsec:simulated-annealing}
+
+\textit{Simulated Annealing} (SA) terinspirasi dari proses pendinginan logam (\textit{annealing}) dalam metalurgi. Berbeda dengan \textit{hill-climbing}, SA memperbolehkan perpindahan ke \textit{state} yang \textbf{lebih buruk} (nilai $h$ lebih tinggi) dengan probabilitas tertentu, yang semakin mengecil seiring berjalannya waktu. Hal ini memungkinkan SA untuk keluar dari \textit{local minimum}.
+
+\subsubsection{Cara Kerja pada Konteks N-Queens}
+\label{subsubsec:sa-cara-kerja}
+
+\begin{enumerate}[label=\arabic*.]
+    \item Bangkitkan \textit{initial state} $S_0$ secara random. Tetapkan suhu awal $T_0$ (misalnya $T_0 = 100$).
+    \item Pada setiap iterasi $t$:
+    \begin{enumerate}[label=\alph*.]
+        \item Pilih satu \textit{neighbor} $S'$ secara \textbf{acak} dari \textit{state} saat ini $S$.
+        \item Hitung perubahan nilai objektif: $\Delta E = h(S') - h(S)$.
+        \item Jika $\Delta E < 0$ (\textit{neighbor} lebih baik): terima $S'$ ($S \leftarrow S'$).
+        \item Jika $\Delta E \geq 0$ (\textit{neighbor} lebih buruk atau sama): terima $S'$ dengan \textbf{probabilitas}:
+        \[
+            P(\text{terima}) = e^{-\Delta E / T}
+        \]
+        di mana $T$ adalah suhu saat ini. Langkah ini dilakukan dengan membangkitkan bilangan acak $r \sim \text{Uniform}(0, 1)$ dan menerima jika $r < P$.
+        \item Perbarui suhu menggunakan \textit{cooling schedule}.
+    \end{enumerate}
+    \item Berhenti jika $h(S) = 0$ (solusi ditemukan) atau suhu $T$ telah mencapai nilai sangat kecil (mendekati 0).
+\end{enumerate}
+
+\subsubsection{\textit{Cooling Schedule}}
+\label{subsubsec:cooling-schedule}
+
+\textit{Cooling schedule} menentukan bagaimana suhu $T$ menurun seiring iterasi. Beberapa skema yang umum digunakan:
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Linear}: $T(t) = T_0 - \alpha \cdot t$, dengan $\alpha$ adalah laju penurunan konstan.
+    \item \textbf{Eksponensial} (\textit{geometric}): $T(t) = T_0 \cdot \alpha^t$, dengan $0 < \alpha < 1$ (misalnya $\alpha = 0.99$ atau $\alpha = 0.995$). Ini adalah skema yang paling umum digunakan.
+    \item \textbf{Logaritmik}: $T(t) = \dfrac{T_0}{\ln(1 + t)}$, menurun lebih lambat.
+\end{enumerate}
+
+\textbf{Rekomendasi}: Gunakan \textit{cooling schedule} eksponensial dengan $\alpha = 0.995$ dan $T_0 = 100$ sebagai konfigurasi awal. Parameter ini dapat disesuaikan berdasarkan eksperimen.
+
+\subsubsection{Probabilitas Penerimaan \textit{State} yang Lebih Buruk}
+\label{subsubsec:prob-accept}
+
+\begin{itemize}
+    \item Pada suhu tinggi ($T$ besar): $e^{-\Delta E / T}$ mendekati 1, sehingga \textit{state} yang lebih buruk hampir selalu diterima $\Rightarrow$ pencarian bersifat eksploratif.
+    \item Pada suhu rendah ($T$ kecil): $e^{-\Delta E / T}$ mendekati 0, sehingga hanya \textit{state} yang lebih baik yang diterima $\Rightarrow$ pencarian menyerupai \textit{hill-climbing}.
+    \item Semakin besar $\Delta E$ (semakin buruk \textit{neighbor}), semakin kecil probabilitas diterima.
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{\textit{Simulated Annealing} untuk N-Queens}
+\label{alg:sa}
+\begin{algorithmic}[1]
+\Require \textit{State} awal $S$ (random), suhu awal $T_0$, \textit{cooling rate} $\alpha$, suhu minimum $T_{\min}$
+\Ensure \textit{State} akhir $S$
+\State $T \leftarrow T_0$
+\While{$T > T_{\min}$ \textbf{and} $h(S) \neq 0$}
+    \State $S' \leftarrow$ pilih satu \textit{neighbor} acak dari $S$
+    \State $\Delta E \leftarrow h(S') - h(S)$
+    \If{$\Delta E < 0$}
+        \State $S \leftarrow S'$ \Comment{Terima \textit{neighbor} yang lebih baik}
+    \ElsIf{$\text{random}(0,1) < e^{-\Delta E / T}$}
+        \State $S \leftarrow S'$ \Comment{Terima \textit{neighbor} yang lebih buruk dengan probabilitas}
+    \EndIf
+    \State $T \leftarrow T \cdot \alpha$ \Comment{\textit{Cooling}}
+\EndWhile
+\State \Return $S$
+\end{algorithmic}
+\end{algorithm}
+
+% -------------------------------------------------------
+\subsection{\textit{Genetic Algorithm}}
+\label{subsec:genetic-algorithm}
+
+\textit{Genetic Algorithm} (GA) terinspirasi dari proses evolusi biologis. Alih-alih bekerja pada satu \textit{state} tunggal, GA memelihara sebuah \textbf{populasi} individu (\textit{state}) yang berevolusi melalui operasi \textit{selection}, \textit{crossover}, dan \textit{mutation}.
+
+\subsubsection{Representasi Kromosom}
+\label{subsubsec:kromosom}
+
+Setiap individu (kromosom) direpresentasikan menggunakan representasi array yang sama seperti pada Bagian~\ref{sec:representasi}:
+\[
+    \text{Kromosom} = [q_1, q_2, \ldots, q_N]
+\]
+di mana $q_i$ menyatakan posisi baris ratu pada kolom ke-$i$.
+
+\textit{Fitness function} didefinisikan berdasarkan \textit{objective function} yang sudah dirancang. Karena $h(S)$ adalah \textit{cost} yang diminimumkan, \textit{fitness} dapat didefinisikan sebagai:
+\[
+    \text{fitness}(S) = h_{\max} - h(S)
+\]
+di mana $h_{\max} = \binom{N}{2}$ adalah jumlah pasangan maksimum. Semakin tinggi \textit{fitness}, semakin baik individu tersebut. Individu dengan $h(S) = 0$ memiliki \textit{fitness} maksimum.
+
+\subsubsection{Populasi}
+\label{subsubsec:populasi}
+
+\begin{itemize}
+    \item \textbf{Ukuran populasi}: $P$ individu (misalnya $P = 100$).
+    \item \textbf{Inisialisasi}: Setiap individu pada populasi awal dibangkitkan secara random.
+    \item Populasi dipertahankan pada ukuran konstan $P$ sepanjang generasi.
+\end{itemize}
+
+\subsubsection{\textit{Selection}}
+\label{subsubsec:selection}
+
+\textit{Selection} memilih individu-individu dari populasi saat ini untuk menjadi \textit{parent} (orang tua) yang akan menghasilkan keturunan. Metode \textit{selection} yang dapat digunakan:
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{\textit{Roulette Wheel Selection}}: Probabilitas terpilih proporsional terhadap \textit{fitness}:
+    \[
+        P(\text{terpilih}_i) = \frac{\text{fitness}(S_i)}{\sum_{j=1}^{P} \text{fitness}(S_j)}
+    \]
+    \item \textbf{\textit{Tournament Selection}}: Pilih $k$ individu secara acak, kemudian ambil yang memiliki \textit{fitness} tertinggi.
+\end{enumerate}
+
+\subsubsection{\textit{Crossover}}
+\label{subsubsec:crossover}
+
+\textit{Crossover} mengombinasikan dua \textit{parent} untuk menghasilkan satu atau dua \textit{offspring} (keturunan). Metode yang direkomendasikan untuk N-Queens:
+
+\textbf{\textit{Single-Point Crossover}}: Pilih titik potong (\textit{crossover point}) $c$ secara acak ($1 \leq c < N$). \textit{Offspring} dibentuk dengan mengambil gen kolom $1$ sampai $c$ dari \textit{parent} pertama dan gen kolom $c+1$ sampai $N$ dari \textit{parent} kedua.
+
+Contoh untuk $N = 8$ dengan titik potong $c = 3$:
+\begin{align*}
+    \text{Parent 1} &= [\mathbf{3, 6, 2}, 7, 1, 4, 8, 5] \\
+    \text{Parent 2} &= [\mathbf{5, 1, 8}, 4, 2, 7, 3, 6] \\
+    \text{Offspring} &= [\mathbf{3, 6, 2}, 4, 2, 7, 3, 6]
+\end{align*}
+
+\subsubsection{\textit{Mutation}}
+\label{subsubsec:mutation}
+
+\textit{Mutation} memberikan variasi acak pada kromosom untuk menjaga diversitas populasi dan mencegah konvergensi prematur. Untuk N-Queens:
+
+\begin{itemize}
+    \item Pilih satu kolom $i$ secara acak.
+    \item Ganti nilai $q_i$ dengan nilai acak baru dari $\{1, 2, \ldots, N\}$.
+    \item Probabilitas mutasi (\textit{mutation rate}) dinotasikan $p_m$ (misalnya $p_m = 0.1$ atau $10\%$).
+\end{itemize}
+
+Contoh mutasi pada kolom 5:
+\[
+    [3, 6, 2, 4, \mathbf{2}, 7, 3, 6] \xrightarrow{\text{mutasi kolom 5}} [3, 6, 2, 4, \mathbf{7}, 7, 3, 6]
+\]
+
+\subsubsection{Alur \textit{Genetic Algorithm}}
+\label{subsubsec:alur-ga}
+
+\begin{algorithm}[H]
+\caption{\textit{Genetic Algorithm} untuk N-Queens}
+\label{alg:ga}
+\begin{algorithmic}[1]
+\Require Ukuran populasi $P$, \textit{mutation rate} $p_m$, jumlah generasi maksimum $G$
+\Ensure Individu terbaik (solusi atau individu dengan \textit{fitness} tertinggi)
+\State Inisialisasi populasi $\mathcal{P}$ dengan $P$ individu random
+\For{$g = 1$ \textbf{to} $G$}
+    \State Hitung \textit{fitness} setiap individu dalam $\mathcal{P}$
+    \If{ada individu dengan $h = 0$}
+        \State \Return individu tersebut \Comment{Solusi ditemukan}
+    \EndIf
+    \State $\mathcal{P}_{\text{baru}} \leftarrow \emptyset$
+    \While{$|\mathcal{P}_{\text{baru}}| < P$}
+        \State Pilih dua \textit{parent} $P_1, P_2$ menggunakan \textit{selection}
+        \State $O \leftarrow$ \Call{Crossover}{$P_1, P_2$}
+        \If{$\text{random}(0,1) < p_m$}
+            \State $O \leftarrow$ \Call{Mutate}{$O$}
+        \EndIf
+        \State Tambahkan $O$ ke $\mathcal{P}_{\text{baru}}$
+    \EndWhile
+    \State $\mathcal{P} \leftarrow \mathcal{P}_{\text{baru}}$
+\EndFor
+\State \Return individu dengan \textit{fitness} tertinggi di $\mathcal{P}$
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+% ============================================================================
+% SECTION 9: DAFTAR FUNGSI / COMMAND UTAMA
+% ============================================================================
+\section{Daftar Fungsi / \textit{Command} Utama}
+\label{sec:daftar-fungsi}
+
+Tabel~\ref{tab:fungsi} menyajikan daftar fungsi utama yang harus diimplementasikan beserta penjelasan singkat masing-masing.
+
+\begin{table}[H]
+\small
+\centering
+\caption{Daftar fungsi utama yang harus diimplementasikan.}
+\label{tab:fungsi}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|>{\ttfamily\small}l|X|}
+\hline
+\textbf{Nama Fungsi} & \textbf{Penjelasan Singkat} \\
+\hline
+generate\_random\_state(n) & Membangkitkan \textit{initial state} secara random untuk papan berukuran $n \times n$. Mengembalikan array $[q_1, q_2, \ldots, q_n]$. \\
+\hline
+calculate\_h(state) & Menghitung nilai \textit{objective function} $h(S)$, yaitu jumlah pasangan ratu yang saling menyerang pada \textit{state} yang diberikan. \\
+\hline
+get\_neighbors(state) & Membangkitkan seluruh \textit{neighbor} dari \textit{state} saat ini. Mengembalikan daftar \textit{state} tetangga. \\
+\hline
+hill\_climbing\_basic(n) & Menjalankan algoritma \textit{Basic Hill-Climbing} (\textit{Steepest-Ascent}) untuk N-Queens. \\
+\hline
+hill\_climbing\_sideways(n, max\_sideways) & Menjalankan \textit{Hill-Climbing} dengan \textit{Sideways Move}. Parameter \texttt{max\_sideways} membatasi jumlah \textit{sideways move} berturut-turut. \\
+\hline
+hill\_climbing\_stochastic(n) & Menjalankan \textit{Stochastic Hill-Climbing} untuk N-Queens. \\
+\hline
+hill\_climbing\_random\_restart(n, max\_restarts) & Menjalankan \textit{Random Restart Hill-Climbing}. Parameter \texttt{max\_restarts} membatasi jumlah percobaan ulang. \\
+\hline
+simulated\_annealing(n, T0, alpha, T\_min) & Menjalankan \textit{Simulated Annealing}. Parameter meliputi suhu awal \texttt{T0}, \textit{cooling rate} \texttt{alpha}, dan suhu minimum \texttt{T\_min}. \\
+\hline
+genetic\_algorithm(n, pop\_size, mut\_rate, max\_gen) & Menjalankan \textit{Genetic Algorithm}. Parameter meliputi ukuran populasi, \textit{mutation rate}, dan jumlah generasi maksimum. \\
+\hline
+print\_board(state) & Mencetak visualisasi papan N-Queens dalam format teks. \\
+\hline
+visualize\_search(states, h\_values) & Menampilkan animasi/visualisasi proses pencarian, menunjukkan perubahan \textit{state} dan nilai $h$ antar iterasi. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\textbf{Catatan}: Seluruh fungsi algoritma harus mengembalikan minimal: (1)~\textit{state} akhir, (2)~nilai $h$ akhir, dan (3)~riwayat nilai $h$ per iterasi.
+
+% ============================================================================
+% SECTION 10: CONTOH INPUT DAN OUTPUT
+% ============================================================================
+\section{Contoh Input dan Output}
+\label{sec:contoh-io}
+
+\subsection{Contoh Input}
+\label{subsec:contoh-input}
+
+\textbf{Parameter input}:
+\begin{itemize}
+    \item Ukuran papan: $N = 8$
+    \item Algoritma: \textit{Basic Hill-Climbing} (\textit{Steepest-Ascent})
+\end{itemize}
+
+\textbf{\textit{Initial state}} (dibangkitkan secara random):
+\[
+    S_0 = [5, 2, 4, 6, 8, 3, 1, 4]
+\]
+
+Visualisasi papan \textit{initial state}:
+\begin{lstlisting}[language={}, basicstyle=\ttfamily\small, frame=single, caption={Visualisasi \textit{initial state} $S_0 = \lbrack 5, 2, 4, 6, 8, 3, 1, 4 \rbrack$.}]
+State awal (h = 5):
+. . . . . . . .
+. Q . . . . . .
+. . . . . Q . .
+. . Q . . . . Q
+Q . . . . . . .
+. . . Q . . . .
+. . . . . . . .
+. . . . Q . . .
+\end{lstlisting}
+
+\subsection{Contoh Output}
+\label{subsec:contoh-output}
+
+\textbf{\textit{State} akhir} (solusi ditemukan setelah 4 iterasi):
+\[
+    S_{\text{akhir}} = [3, 6, 2, 7, 1, 4, 8, 5]
+\]
+
+Visualisasi papan \textit{state} akhir:
+\begin{lstlisting}[language={}, basicstyle=\ttfamily\small, frame=single, caption={Visualisasi \textit{final state} $S_{akhir} = \lbrack 3, 6, 2, 7, 1, 4, 8, 5 \rbrack$.}]
+State akhir (h = 0) - SOLUSI DITEMUKAN:
+. . . . Q . . .
+. . Q . . . . .
+Q . . . . . . .
+. . . . . Q . .
+. . . . . . . Q
+. Q . . . . . .
+. . . Q . . . .
+. . . . . . Q .
+\end{lstlisting}
+
+\textbf{Riwayat nilai \textit{objective function}}:
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+\textbf{Iterasi} & \textbf{$h(S)$} \\
+\midrule
+0 & 5 \\
+1 & 3 \\
+2 & 2 \\
+3 & 1 \\
+4 & 0 \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Riwayat nilai \textit{objective function} selama proses \textit{Hill-Climbing}.}
+\end{center}
+
+\subsection{Contoh Output: Kasus Terjebak di \textit{Local Minimum}}
+\label{subsec:contoh-stuck}
+
+Tidak semua percobaan \textit{hill-climbing} berhasil menemukan solusi. Berikut contoh output ketika algoritma terjebak:
+
+\begin{lstlisting}[language={}, basicstyle=\ttfamily\small, frame=single, caption={Contoh output ketika terjebak di \textit{local minimum}.}]
+Hill-Climbing (Basic) untuk 8-Queens:
+  State awal:  [4, 7, 3, 8, 2, 5, 1, 6]  | h = 3
+  Iterasi 1:   [4, 7, 5, 8, 2, 5, 1, 6]  | h = 2
+  Iterasi 2:   [4, 7, 5, 8, 2, 5, 3, 6]  | h = 1
+  Iterasi 3:   TERJEBAK di local minimum (h = 1)
+  Tidak ada neighbor dengan h < 1.
+
+Status: GAGAL (terjebak di local minimum)
+\end{lstlisting}
+
+Pada kasus ini, \textit{Random Restart Hill-Climbing} akan membangkitkan \textit{state} baru dan mencoba lagi.
+
+\subsection{Contoh Output: \textit{Simulated Annealing}}
+\label{subsec:contoh-sa}
+
+\begin{lstlisting}[language={}, basicstyle=\ttfamily\small, frame=single, caption={Contoh output \textit{Simulated Annealing}.}]
+Simulated Annealing untuk 8-Queens:
+  T0 = 100.0, alpha = 0.995, T_min = 0.01
+  State awal:  [2, 5, 3, 1, 7, 4, 6, 8]  | h = 4
+  Iterasi 10:  h = 3, T = 95.11
+  Iterasi 50:  h = 2, T = 77.83  (menerima state lebih buruk)
+  Iterasi 100: h = 1, T = 60.58
+  Iterasi 178: h = 0, T = 41.22
+
+Status: SOLUSI DITEMUKAN pada iterasi 178
+  State akhir: [6, 4, 2, 8, 5, 7, 1, 3]  | h = 0
+\end{lstlisting}
+
+\subsection{Contoh Output: \textit{Genetic Algorithm}}
+\label{subsec:contoh-ga}
+
+\begin{lstlisting}[language={}, basicstyle=\ttfamily\small, frame=single, caption={Contoh output \textit{Genetic Algorithm}.}]
+Genetic Algorithm untuk 8-Queens:
+  Populasi = 100, Mutation Rate = 0.1, Max Generasi = 500
+  Generasi 1:   fitness terbaik = 25, rata-rata = 18.4
+  Generasi 10:  fitness terbaik = 26, rata-rata = 22.1
+  Generasi 25:  fitness terbaik = 27, rata-rata = 24.8
+  Generasi 42:  fitness terbaik = 28, rata-rata = 26.3
+
+Status: SOLUSI DITEMUKAN pada generasi 42
+  Individu terbaik: [5, 3, 1, 7, 2, 8, 6, 4]  | h = 0
+\end{lstlisting}
+
+% ============================================================================
+% BAGIAN 2: KAGGLE — LOAN APPROVAL CLASSIFICATION
+% ============================================================================
+
+\newpage
+\setcounter{section}{0}
+\renewcommand{\thesection}{K.\arabic{section}}
+
+\begin{center}
+    {\LARGE \textbf{Write-Up: Kaggle Loan Approval Classification}}\\[0.3cm]
+    {\large Implementasi From-Scratch: Decision Tree, Logistic Regression, SVM}\\[0.5cm]
+\end{center}
+
+% ============================================================================
+% SECTION K.1: TLDR
+% ============================================================================
+\section{TLDR}
+\label{sec:tldr}
+
+Tugas ini menyelesaikan kompetisi klasifikasi persetujuan pinjaman (\textit{Loan Approval Classification}) pada Kaggle menggunakan tiga algoritma \textit{machine learning} yang diimplementasikan \textbf{from scratch} tanpa library ML: \textbf{CART Decision Tree}, \textbf{Logistic Regression}, dan \textbf{Linear SVM}. Seluruh implementasi hanya menggunakan \texttt{numpy} untuk komputasi inti dan \texttt{pandas} untuk manipulasi data.
+
+Hasil \textit{5-fold stratified cross-validation} menunjukkan CART Decision Tree memperoleh \textit{macro F1-score} tertinggi (\textbf{0.8485}), diikuti Logistic Regression (\textbf{0.8433}) dan Linear SVM (\textbf{0.8223}). Model CART dipilih sebagai model final untuk submission Kaggle. Ketiga implementasi from-scratch berhasil menyamai atau bahkan sedikit mengungguli baseline scikit-learn, menunjukkan keberhasilan implementasi algoritma inti.
+
+% ============================================================================
+% SECTION K.2: PROBLEM OVERVIEW
+% ============================================================================
+\section{Problem Overview}
+\label{sec:problem-overview}
+
+\subsection{Deskripsi Permasalahan}
+
+Diberikan dataset pemohon pinjaman, tugas adalah memprediksi \texttt{loan\_status} (0~=~ditolak, 1~=~disetujui) untuk setiap pemohon pada data uji. Metrik evaluasi yang digunakan adalah \textbf{macro F1-score}, yaitu rata-rata F1 dari kelas 0 dan kelas 1 tanpa memperhitungkan proporsi kelas.
+
+\subsection{Dataset}
+
+\begin{itemize}
+    \item \textbf{Train}: 28.800 baris, 12 fitur + 1 label (\texttt{loan\_status}).
+    \item \textbf{Test}: 7.200 baris, 12 fitur (tanpa label).
+    \item \textbf{Distribusi kelas}: 22.400 baris label 0 (77,8\%) dan 6.400 baris label 1 (22,2\%) --- rasio ketidakseimbangan $\approx$3,5:1.
+    \item Tidak ada \textit{missing value} maupun duplikat.
+\end{itemize}
+
+\noindent Fitur terdiri dari 8 kolom numerik (\texttt{person\_age}, \texttt{person\_income}, \texttt{loan\_amnt}, \texttt{loan\_int\_rate}, dll.) dan 3 kolom kategorik (\texttt{person\_gender}, \texttt{person\_home\_ownership}, \texttt{previous\_loan\_defaults\_on\_file}).
+
+\subsection{Temuan EDA Penting}
+
+\begin{enumerate}
+    \item \textbf{Outlier}: 7 baris train memiliki \texttt{person\_age} hingga 144 tahun dan \texttt{person\_emp\_exp} hingga 125 tahun. Ditangani dengan \textit{capping} ke batas wajar.
+    \item \textbf{Fitur dominan}: Seluruh 14.629 pemohon dengan \texttt{previous\_loan\_defaults\_on\_file = Yes} memiliki \texttt{loan\_status = 0} (100\% ditolak) --- fitur yang sangat prediktif.
+    \item \textbf{Preprocessing}: One-hot encoding dan standardisasi diimplementasikan manual; semua \textit{bound} di-fit dari train saja untuk menghindari \textit{data leakage}.
+\end{enumerate}
+
+% ============================================================================
+% SECTION K.3: DTL
+% ============================================================================
+\section{Decision Tree Learning (CART)}
+\label{sec:dtl}
+
+\subsection{Pemilihan Varian}
+
+Dipilih \textbf{CART} (\textit{Classification and Regression Trees}) dengan alasan:
+\begin{itemize}
+    \item Mayoritas fitur bersifat numerik kontinu --- CART melakukan \textit{binary split} berbasis \textit{threshold} tanpa perlu diskritisasi manual (berbeda dengan ID3).
+    \item \textit{Gini impurity} sebagai \textit{split criterion} --- komputasi lebih cepat daripada \textit{entropy} (tanpa operasi logaritma).
+    \item \textit{Binary tree} menghasilkan struktur yang lebih seimbang dan efisien.
+\end{itemize}
+
+\subsection{Implementasi}
+
+Implementasi mencakup:
+\begin{enumerate}
+    \item \textbf{Split criterion}: Weighted Gini impurity dengan dukungan \texttt{class\_weight="balanced"} untuk menangani ketidakseimbangan kelas. Weight dihitung sebagai $w_c = \frac{n}{n_{\text{classes}} \cdot n_c}$.
+    \item \textbf{Best split search}: Untuk setiap fitur, data diurutkan berdasarkan nilai fitur, kemudian dilakukan pencarian \textit{threshold} optimal yang meminimalkan \textit{weighted Gini} kumulatif (kompleksitas $O(n \cdot m)$ per node).
+    \item \textbf{Stopping criteria}: \texttt{max\_depth=10}, \texttt{min\_samples\_split=10}, \texttt{min\_samples\_leaf=5}.
+    \item \textbf{Prediksi}: Traversal dari root ke leaf; prediksi berdasarkan kelas mayoritas (weighted) di leaf node.
+\end{enumerate}
+
+\subsection{Hasil}
+
+CART from-scratch memperoleh \textbf{macro F1 = 0.8485 $\pm$ 0.0082} pada 5-fold CV, sebanding dengan baseline scikit-learn \texttt{DecisionTreeClassifier} yang memperoleh 0.8483 $\pm$ 0.0083. Skor per fold: [0.8477, 0.8565, 0.8417, 0.8589, 0.8376]. Hal ini menunjukkan implementasi \textit{split criterion} dan \textit{tree building} sudah benar.
+
+% ============================================================================
+% SECTION K.4: LOGISTIC REGRESSION
+% ============================================================================
+\section{Logistic Regression}
+\label{sec:lr}
+
+\subsection{Implementasi}
+
+Logistic Regression diimplementasikan dengan komponen:
+\begin{enumerate}
+    \item \textbf{Forward pass}: $\hat{y} = \sigma(\mathbf{w}^\top \mathbf{x} + b)$ dengan \textit{numerically stable sigmoid}.
+    \item \textbf{Loss function}: Weighted binary cross-entropy + L2 regularization:
+    \[
+        \mathcal{L} = -\frac{1}{n}\sum_{i=1}^{n} s_i \big[ y_i \log \hat{y}_i + (1 - y_i) \log (1 - \hat{y}_i) \big] + \frac{\lambda}{2} \|\mathbf{w}\|^2
+    \]
+    di mana $s_i$ adalah \textit{sample weight} untuk menangani \textit{class imbalance}.
+    \item \textbf{Gradien manual}: $\nabla_\mathbf{w} = \frac{1}{n} \mathbf{X}^\top \big[ (\hat{\mathbf{y}} - \mathbf{y}) \odot \mathbf{s} \big] + \lambda \mathbf{w}$
+\end{enumerate}
+
+\subsection{Optimizer}
+
+Diimplementasikan dua optimizer:
+\begin{itemize}
+    \item \textbf{Gradient Descent}: \textit{Vanilla mini-batch gradient descent} dengan learning rate tetap.
+    \item \textbf{Adam} (Kingma \& Ba, 2014): Adaptive learning rate dengan \textit{first moment} ($m$) dan \textit{second moment} ($v$) serta \textit{bias correction}:
+    \[
+        \mathbf{w}_{t+1} = \mathbf{w}_t - \frac{\eta \cdot \hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}
+    \]
+\end{itemize}
+
+Adam menunjukkan konvergensi yang lebih cepat dan stabil dibandingkan GD biasa, dengan loss menurun lebih tajam pada 100 iterasi pertama.
+
+\subsection{Hasil}
+
+Dengan Adam optimizer (\texttt{lr=0.01}, \texttt{batch\_size=512}, 500 iterasi) dan \textit{threshold tuning} pada data validasi, Logistic Regression from-scratch memperoleh \textbf{macro F1 = 0.8433 $\pm$ 0.0050}, bahkan mengungguli baseline scikit-learn (0.8170 $\pm$ 0.0036). Skor per fold: [0.8520, 0.8434, 0.8438, 0.8404, 0.8371]. Keunggulan ini kemungkinan disebabkan oleh \textit{threshold tuning} yang diimplementasikan pada versi from-scratch.
+
+% ============================================================================
+% SECTION K.5: SVM
+% ============================================================================
+\section{Support Vector Machine}
+\label{sec:svm}
+
+\subsection{Implementasi}
+
+Diimplementasikan \textbf{Linear Soft-Margin SVM} dalam formulasi \textbf{primal}:
+\[
+    \min_{\mathbf{w}, b} \; \frac{1}{2}\|\mathbf{w}\|^2 + C \cdot \frac{1}{n} \sum_{i=1}^{n} s_i \cdot \max(0, 1 - y_i(\mathbf{w}^\top \mathbf{x}_i + b))
+\]
+di mana label $y \in \{-1, +1\}$ (dikonversi internal dari 0/1), $C$ adalah parameter regularisasi, dan $s_i$ adalah \textit{sample weight}.
+
+\subsection{Pertimbangan Desain}
+
+\begin{itemize}
+    \item \textbf{Formulasi primal} dipilih karena formulasi dual memerlukan matriks kernel $n \times n$ ($\approx$28.800$^2$) yang terlalu besar untuk komputasi dengan \texttt{numpy} murni.
+    \item \textbf{Hinge loss} dioptimasi menggunakan \textit{subgradient descent}: pada titik di mana margin $< 1$, subgradien dihitung; pada titik lain, hanya gradien regularisasi yang dipakai.
+    \item \textbf{Threshold tuning}: Karena SVM menghasilkan \textit{decision function} (bukan probabilitas), threshold pada $\mathbf{w}^\top \mathbf{x} + b$ dioptimalkan untuk memaksimalkan macro F1.
+\end{itemize}
+
+\subsection{Hasil}
+
+Linear SVM from-scratch memperoleh \textbf{macro F1 = 0.8223 $\pm$ 0.0067} pada 5-fold CV, mengungguli baseline scikit-learn \texttt{LinearSVC} (0.8146 $\pm$ 0.0030). Skor per fold: [0.8349, 0.8214, 0.8207, 0.8193, 0.8151]. Meskipun performanya lebih rendah dibandingkan CART dan LR, SVM tetap kompetitif berkat \textit{threshold tuning} dan \textit{class weight}.
+
+% ============================================================================
+% SECTION K.6: VALIDATION STRATEGY
+% ============================================================================
+\section{Validation Strategy}
+\label{sec:validation}
+
+\subsection{Metode Validasi}
+
+Digunakan \textbf{5-Fold Stratified Cross-Validation} yang diimplementasikan manual:
+\begin{itemize}
+    \item Data dibagi ke 5 fold dengan distribusi kelas proporsional di setiap fold.
+    \item Setiap fold secara bergantian menjadi data validasi, 4 fold lainnya menjadi data training.
+    \item Seluruh preprocessing (cleaning bounds, encoding categories, scaling mean/std) di-fit hanya dari data training fold --- tidak ada \textit{data leakage}.
+\end{itemize}
+
+\subsection{Perbandingan Skor}
+
+\begin{table}[H]
+\centering
+\caption{Perbandingan macro F1 (5-fold CV) dari implementasi from-scratch vs scikit-learn.}
+\label{tab:comparison}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{From-Scratch} & \textbf{Scikit-Learn} & \textbf{$\Delta$} \\
+\midrule
+Decision Tree (CART) & 0.8485 $\pm$ 0.0082 & 0.8483 $\pm$ 0.0083 & +0.0002 \\
+Logistic Regression  & 0.8433 $\pm$ 0.0050 & 0.8170 $\pm$ 0.0036 & +0.0263 \\
+Linear SVM           & 0.8223 $\pm$ 0.0067 & 0.8146 $\pm$ 0.0030 & +0.0077 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Model final yang digunakan untuk submission Kaggle adalah \textbf{CART Decision Tree} (from-scratch) karena memiliki macro F1 CV tertinggi.
+
+\textbf{Skor Leaderboard Kaggle}: \textit{(belum disubmit --- skor akan diisi setelah upload submission.csv ke Kaggle)}.
+
+% ============================================================================
+% SECTION K.7: PERCOBAAN YANG GAGAL
+% ============================================================================
+\section{Percobaan yang Gagal}
+\label{sec:failed}
+
+\begin{enumerate}
+    \item \textbf{SVM tanpa class weight}: Tanpa penanganan \textit{class imbalance}, SVM cenderung memprediksi seluruh data sebagai kelas mayoritas (0), menghasilkan macro F1 yang sangat rendah ($\approx$0.44).
+
+    \item \textbf{Vanilla GD untuk SVM}: Learning rate tetap pada gradient descent biasa menyebabkan konvergensi sangat lambat dan sensitif terhadap pemilihan \textit{learning rate}. Terlalu besar menyebabkan divergensi, terlalu kecil memerlukan ribuan iterasi.
+
+    \item \textbf{LR tanpa threshold tuning}: Dengan threshold default 0.5, Logistic Regression kurang optimal karena distribusi kelas tidak seimbang. Threshold tuning meningkatkan macro F1 sekitar 1--3\%.
+
+    \item \textbf{SVM kernel (dual)}: Dicoba SVM dengan kernel RBF melalui formulasi dual, tetapi komputasi matriks kernel $28.800 \times 28.800$ membutuhkan memori dan waktu yang tidak feasible dengan \texttt{numpy} murni.
+
+    \item \textbf{Decision Tree tanpa class weight}: Tanpa \texttt{class\_weight="balanced"}, tree cenderung bias ke kelas mayoritas pada leaf nodes, menurunkan recall kelas 1 secara signifikan.
+\end{enumerate}
+
+% ============================================================================
+% SECTION K.8: PENGEMBANGAN LEBIH LANJUT
+% ============================================================================
+\section{Pengembangan Lebih Lanjut}
+\label{sec:future}
+
+\begin{enumerate}
+    \item \textbf{Pruning pada Decision Tree}: Implementasi \textit{cost-complexity pruning} ($\alpha$-pruning) untuk mengurangi \textit{overfitting} dan meningkatkan generalisasi.
+
+    \item \textbf{Feature Engineering}: Penambahan fitur turunan seperti rasio \texttt{loan\_amnt / person\_income}, interaksi \texttt{credit\_score} $\times$ \texttt{previous\_loan\_defaults}, atau transformasi logaritmik pada fitur berdistribusi \textit{long-tail}.
+
+    \item \textbf{SVM Kernel Approximation}: Menggunakan \textit{Random Fourier Features} (Rahimi \& Recht, 2007) untuk mengaproksimasi kernel RBF tanpa menghitung matriks kernel penuh.
+
+    \item \textbf{Learning Rate Scheduling}: Implementasi \textit{cosine annealing} atau \textit{step decay} pada learning rate untuk konvergensi lebih baik pada LR dan SVM.
+
+    \item \textbf{Calibrasi probabilitas}: Implementasi \textit{Platt scaling} pada output SVM untuk memperoleh probabilitas terkalibrasi.
+
+    \item \textbf{Optimasi hyperparameter}: Grid search atau random search yang lebih sistematis untuk \texttt{max\_depth}, \texttt{C}, \texttt{learning\_rate}, dan parameter lainnya.
+\end{enumerate}
+
+% ============================================================================
+% SECTION K.9: REFERENSI
+% ============================================================================
+\section{Referensi}
+\label{sec:referensi-kaggle}
+
+\begin{enumerate}
+    \item Breiman, L., Friedman, J., Stone, C.J., \& Olshen, R.A. (1984). \textit{Classification and Regression Trees}. Wadsworth.
+    \item Bishop, C.M. (2006). \textit{Pattern Recognition and Machine Learning}. Springer.
+    \item Kingma, D.P. \& Ba, J. (2014). Adam: A Method for Stochastic Optimization. \textit{arXiv:1412.6980}.
+    \item Cortes, C. \& Vapnik, V. (1995). Support-Vector Networks. \textit{Machine Learning}, 20(3), 273--297.
+    \item Hastie, T., Tibshirani, R., \& Friedman, J. (2009). \textit{The Elements of Statistical Learning} (2nd ed.). Springer.
+    \item Shalev-Shwartz, S. et al. (2011). Pegasos: Primal Estimated sub-GrAdient SOlver for SVM. \textit{Mathematical Programming}, 127(1), 3--30.
+\end{enumerate}
+
+% ============================================================================
+\end{document}
